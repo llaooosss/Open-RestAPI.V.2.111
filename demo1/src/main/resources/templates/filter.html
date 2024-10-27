@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фильтр фильмов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Фильтр фильмов</h1>
+    <form id="filterForm">
+        <div class="mb-3">
+            <label for="kinopoiskId" class="form-label">Кинопоиск ID</label>
+            <input type="number" class="form-control" id="kinopoiskId" name="kinopoiskId">
+        </div>
+        <div class="mb-3">
+            <label for="nameRu" class="form-label">Название (RU)</label>
+            <input type="text" class="form-control" id="nameRu" name="nameRu">
+        </div>
+        <div class="mb-3">
+            <label for="genre" class="form-label">Жанр</label>
+            <input type="text" class="form-control" id="genre" name="genre">
+        </div>
+        <div class="mb-3">
+            <label for="ratingKinopoiskMin" class="form-label">Рейтинг Кинопоиск (от)</label>
+            <input type="number" step="0.1" class="form-control" id="ratingKinopoiskMin" name="ratingKinopoiskMin">
+            <label for="ratingKinopoiskMax" class="form-label">Рейтинг Кинопоиск (до)</label>
+            <input type="number" step="0.1" class="form-control" id="ratingKinopoiskMax" name="ratingKinopoiskMax">
+        </div>
+        <div class="mb-3">
+            <label for="yearMin" class="form-label">Год (от)</label>
+            <input type="number" class="form-control" id="yearMin" name="yearMin">
+            <label for="yearMax" class="form-label">Год (до)</label>
+            <input type="number" class="form-control" id="yearMax" name="yearMax">
+        </div>
+        <button type="submit" class="btn btn-primary">Применить фильтр</button>
+    </form>
+
+    <div id="results" class="mt-4"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#filterForm').on('submit', function(event) {
+            event.preventDefault();
+
+            const formData = {
+                kinopoiskId: $('#kinopoiskId').val() || null,
+                nameRu: $('#nameRu').val() || null,
+                genre: $('#genre').val() || null,
+                ratingKinopoisk: {
+                    min: $('#ratingKinopoiskMin').val() || null,
+                    max: $('#ratingKinopoiskMax').val() || null
+                },
+                year: {
+                    min: $('#yearMin').val() || null,
+                    max: $('#yearMax').val() || null
+                }
+            };
+
+            $.ajax({
+                url: '/api/v2.2/films/filter',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    displayResults(response.content);
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    alert('Произошла ошибка при фильтрации фильмов.');
+                }
+            });
+        });
+
+        function displayResults(films) {
+            let resultsDiv = $('#results');
+            resultsDiv.empty();
+
+            if (films.length === 0) {
+                resultsDiv.append('<p>Фильмы не найдены.</p>');
+                return;
+            }
+            let table = '<table class="table"><thead><tr><th>ID</th><th>Название</th><th>Жанр</th><th>Рейтинг</th><th>Год</th></tr></thead><tbody>';
+
+            films.forEach(film => {
+                table += <tr>
+                    <td>${film.id}</td>
+                    <td>${film.nameRu}</td>
+                    <td>${film.genre}</td>
+                    <td>${film.ratingKinopoisk}</td>
+                    <td>${film.year}</td>
+                </tr>;
+            });
+
+            table += '</tbody></table>';
+            resultsDiv.append(table);
+        }
+    });
+</script>
+</body>
+</html>
